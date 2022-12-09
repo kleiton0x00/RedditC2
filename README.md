@@ -14,69 +14,8 @@ Install **PRAW** library in python3:
 pip3 install praw
 ```
 
-## Setup
-- Create a [Reddit](https://reddit.com) account and create your first [app](https://www.reddit.com/prefs/apps/).
-- Copy the **clientid** and **secret key** and paste it to **config.json** (Located in `/RedditC2/Teamserver/`)
-- You are ready to go!
-
-## Usage:
-To execute the teamserver:  
-```
-python3 teamserver.py
-```
-
-### Setup a subreddit
-You must manually create a subreddit (or use an existing one). Then use the following command to use that subreddit in the C2 Server (In this case I have already created a subreddit named *redditc2*):  
-```
-RedditC2> set subreddit redditc2
-[*] Subreddit set to: redditc2
-```
-
-### Setup a listener
-Note: a listener means a Reddit Post. The agent and the teamserver will communicate with eachother by looking at the comments of the specific reddit post. To create a listener, use the command below ("the value of the listener can be anything unique"):  
-```
-RedditC2> set listener myFirstListener
-```
-Once executed, a new Reddit Post will be created with the same post title as the one you set.
-**WARNING**: Once a listener is created, the Reddit Post will always stay there, so you don't need to create the same Reddit Post twice.
-
-### Enter the session
-The following command will enter the session, so you can start queueing tasks:  
-```
-RedditC2> use listener myFirstListener
-[+] Entered the session
-myFirstListener>
-```
-
-### Execute commands
-For **Windows/Linux agent**: execute command using `run <command>` syntax:
-```
-myFirstListener> run whoami
-[+] Command sent
-[+] Received Output:
-kleiton0x7e
-```
-For **Windows agent**: execute powershell command using `powershell <command>` syntax:  
-```
-myFirstListener> powershell 2+2
-[+] Command sent
-[+] Received Output:
-4
-```
-
-### For additional commands, type `help`:  
-```
-RedditC2> help
-
-set subreddit                 --> Select the subreddit where you will create the listener
-set listener [session number] --> Create a post in subreddit where the traffic will ocurr
-use listener [session number]  --> Interact With Each Sessions Individually
-run [command]                 --> Execute a cmd command
-powershell [command]          --> Execute a powershell command
-help                          --> Show the help menu
-exit                          --> Exit from the session
-clear                         --> Clear the screen
-```
+## Quickstart
+See the [Quickstart guide](https://github.com/kleiton0x00/RedditC2/wiki/Setup) on how to get going right away!
 
 ## Demo
 https://user-images.githubusercontent.com/37262788/206015879-589614d5-1a7a-4c21-a342-75bdfc677a61.mp4
@@ -101,8 +40,10 @@ Since it is a custom C2 Implant, it doesn't get detected by any AV as the bevahi
 
 ## TO-DO
 - [X] Teamserver and agent compatible in Windows/Linux  
+- [ ] Make the traffic encrypted  
+- [ ] Add upload/download feature
+- [ ] Add persistence feature
 - [ ] Generate the agents dynamically (from the TeamServer)
-- [ ] Add **pyinstaller** library to compile python agent to exe
 - [ ] Tab autocompletion
 
 ## Credits
