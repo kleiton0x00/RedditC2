@@ -60,7 +60,7 @@ if __name__ == "__main__":
     #fill in the data with your credentials
     #-------------------------------------
     client_id = "myclientid"
-    client_secret = "mysecretkey"
+    client_secret = "mysecretkey:)"
     username = "myusername"
     password = "mypassword"
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
