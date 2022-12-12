@@ -11,3 +11,16 @@ C:\Users\kleiton0x7e\source\repos\RedditAgent\RedditAgent\bin\Debug\RedditSharp.
 C:\Users\kleiton0x7e\source\repos\RedditAgent\RedditAgent\obj\Debug\RedditAgent.csproj.CopyComplete
 C:\Users\kleiton0x7e\source\repos\RedditAgent\RedditAgent\obj\Debug\RedditAgent.exe
 C:\Users\kleiton0x7e\source\repos\RedditAgent\RedditAgent\obj\Debug\RedditAgent.pdb
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\bin\Debug\RedditAgent.exe.config
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\bin\Debug\RedditAgent.exe
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\bin\Debug\RedditAgent.pdb
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\bin\Debug\Newtonsoft.Json.dll
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\bin\Debug\RedditSharp.dll
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\bin\Debug\Newtonsoft.Json.xml
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\bin\Debug\RedditSharp.xml
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\obj\Debug\RedditAgent.csproj.AssemblyReference.cache
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\obj\Debug\RedditAgent.csproj.SuggestedBindingRedirects.cache
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\obj\Debug\RedditAgent.csproj.CoreCompileInputs.cache
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\obj\Debug\RedditAgent.csproj.CopyComplete
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\obj\Debug\RedditAgent.exe
+C:\Users\kleiton0x7e\Desktop\RedditAgent\RedditAgent\obj\Debug\RedditAgent.pdb
