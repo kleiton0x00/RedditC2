@@ -22,17 +22,20 @@ https://user-images.githubusercontent.com/37262788/206015879-589614d5-1a7a-4c21-
 
 ## Workflow
 ### Teamserver  
-1. Go to the specific Reddit Post & post a new comment with the command ("in: <command>")
+1. Go to the specific Reddit Post & post a new comment with the command ("in: <encrypted command>")
 2. Read for new comment which includes the word "out:"
 3. If no such comment is found, go back to step 2
-4. Parse and read the output
+4. Parse the comment, decrypt it and read it's output
 5. Edit the existing comment to "executed", to avoid reexecuting it
 
 ### Client  
 1. Go to the specific Reddit Post & read the latest comment which includes "in:"
 2. If no new comment is detected, go back to step 1
-3. Parse the command out of the comment and executes it locally
-4. Reply to the comment with the command's output ("out:" <output>)
+3. Parse the command out of the comment, decrypt it and execute it locally
+4. Encrypt the command's output and reply it to the respective comment ("out:" <encrypted output>)
+
+Below is a demonstration of the XOR-encrypted C2 traffic for understanding purposes:  
+![Screenshot from 2022-12-15 10-58-34](https://user-images.githubusercontent.com/37262788/207849406-6c221102-9352-46dc-a461-947b66e3a712.png)
 
 ## Scanning results
 Since it is a custom C2 Implant, it doesn't get detected by any AV as the bevahiour is completely legit.
@@ -40,11 +43,15 @@ Since it is a custom C2 Implant, it doesn't get detected by any AV as the bevahi
 
 ## TO-DO
 - [X] Teamserver and agent compatible in Windows/Linux  
-- [ ] Make the traffic encrypted  
+- [X] Make the traffic encrypted  
 - [ ] Add upload/download feature
 - [ ] Add persistence feature
 - [ ] Generate the agents dynamically (from the TeamServer)
 - [ ] Tab autocompletion
 
+## Known Issues  
+
+Because of the slow Reddit API that this C2 project is heavily based on, the created listeners by the Teamserver sometime will not work (unable to send/receive comments). Initializing a listener by the Teamserver `set listener <listenerName>` might take up to 6 minutes for the Reddit API to be ready to host the C2 traffic. It is recommended to create a new post manually (with the title of your choice) to avoid such issues (and long waiting time) by both the Teamserver and the Implants.  
+
 ## Credits
-Special thanks to @T4TCH3R for working with me and contributing to this project.
+Special thanks to [@T4TCH3R](https://github.com/T4TCH3R/) for working with me and contributing to this project.

