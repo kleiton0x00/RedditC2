@@ -8,6 +8,7 @@ import platform
 from prawcore import NotFound
 from praw.models import InlineImage
 from encryption import *
+from banner import *
 import autocomplete
 import readline
 
@@ -123,6 +124,9 @@ def sendCommand(subreddit_name, title, command):
         
 
 if __name__ == "__main__":
+    #print the banner
+    print(banner)
+    
     #retrieve the data from the configuration file
     with open ("config.json", "r") as configFile:
         data = json.load(configFile)
@@ -165,8 +169,8 @@ if __name__ == "__main__":
                 listListeners(subreddit_name)
 
         #careful, only execute this once
-        elif command[:12] == "set listener":
-            listener_id = command[13:]
+        elif command[:15] == "create listener":
+            listener_id = command[16:]
             if(subreddit_name == ""):
                 print("[!] Put the value of subreddit")
             else:
@@ -232,15 +236,15 @@ if __name__ == "__main__":
 
         elif command == 'help':
             print("""
-set subreddit                 --> Select the subreddit where you will create the listener
-list listeners                --> List all listeners you can use within the subreddit
-set listener [session number] --> Create a post in subreddit where the traffic will ocurr
-use listener [session number] --> Interact With Each Session Individually
-run [command]                 --> Execute a cmd command
-powershell [command]          --> Execute a powershell command
-help                          --> Show the help menu
-exit                          --> Exit from the session
-clear                         --> Clear the screen
+set subreddit                    --> Select the subreddit where you will create the listener
+list listeners                   --> List all listeners you can use within the subreddit
+create listener [session number] --> Create a post in subreddit where the traffic will ocurr
+use listener [session number]    --> Interact With Each Session Individually
+run [command]                    --> Execute a cmd command
+powershell [command]             --> Execute a powershell command
+help                             --> Show the help menu
+exit                             --> Exit from the session
+clear                            --> Clear the screen
                 """)
 
         else:

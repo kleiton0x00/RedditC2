@@ -47,7 +47,7 @@ Since it is a custom C2 Implant, it doesn't get detected by any AV as the bevahi
 - [ ] Add upload/download feature
 - [ ] Add persistence feature
 - [ ] Generate the agents dynamically (from the TeamServer)
-- [ ] Tab autocompletion
+- [X] Tab autocompletion
 
 ## Known Issues  
 
