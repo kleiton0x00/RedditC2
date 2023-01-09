@@ -44,14 +44,14 @@ Since it is a custom C2 Implant, it doesn't get detected by any AV as the bevahi
 ## TO-DO
 - [X] Teamserver and agent compatible in Windows/Linux  
 - [X] Make the traffic encrypted  
-- [ ] Add upload/download feature
+- [X] Add upload/download feature
 - [ ] Add persistence feature
 - [ ] Generate the agents dynamically (from the TeamServer)
 - [X] Tab autocompletion
 
 ## Known Issues  
 
-Because of the slow Reddit API that this C2 project is heavily based on, the created listeners by the Teamserver sometime will not work (unable to send/receive comments). Initializing a listener by the Teamserver `set listener <listenerName>` might take up to 6 minutes for the Reddit API to be ready to host the C2 traffic. It is recommended to create a new post manually (with the title of your choice) to avoid such issues (and long waiting time) by both the Teamserver and the Implants.  
+Because of the slow Reddit API that this C2 project is heavily based on, the created listeners by the Teamserver sometime will not work (unable to send/receive comments). Initializing a listener by the Teamserver `create listener <listenerName>` might take up to 6 minutes for the Reddit API to be ready to host the C2 traffic. It is recommended to create a new post manually (with the title of your choice) to avoid such issues (and long waiting time) by both the Teamserver and the Implants.  
 
 ## Credits
 Special thanks to [@T4TCH3R](https://github.com/T4TCH3R/) for working with me and contributing to this project.
