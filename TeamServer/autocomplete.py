@@ -2,7 +2,7 @@ import os
 import re
 import readline
 
-COMMANDS = ['set subreddit', 'create listener', 'use listener', 'list listeners', 'help',
+COMMANDS = ['set subreddit', 'use listener', 'list listeners', 'help',
             'exit', 'clear', 'run', 'powershell', 'download', 'upload']
 RE_SPACE = re.compile('.*\s+$', re.M)
 

